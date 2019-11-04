@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class DispatchServlet extends HttpServlet {
 
     private List<String> classNameList = new ArrayList<>();
     private Map<String, Object> instanceMap = new HashMap<>();
-    private Map<String, Method> handlerMap = new HashMap<>();
+    private Map<String, Handler> handlerMap = new HashMap<>();
 
     @Override
     public void init() throws ServletException {
@@ -52,14 +53,19 @@ public class DispatchServlet extends HttpServlet {
         url = url.replace(contextPath, "").replaceAll("/+", "");
         Map<String, String[]> parameterMap = req.getParameterMap();
 
-        for(Entry<String, Method> entry: handlerMap.entrySet()) {
+        for(Entry<String, Handler> entry: handlerMap.entrySet()) {
             if(entry.getKey().equals(url)) {
-                Method method = entry.getValue();
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                Object[] params = new Object[parameterTypes.length];
+                Handler handler = entry.getValue();
+                Method method = handler.method;
 
 
-                method.invoke(controller, params);
+
+
+                try {
+                    method.invoke(handler.clazz, params);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -175,11 +181,20 @@ public class DispatchServlet extends HttpServlet {
                 for (Method method : methods) {
                     BQRequestMapping requestMapping = method.getAnnotation(BQRequestMapping.class);
                     String requestUrl = "/" + url + requestMapping.value();
-                    requestUrl.replaceAll("/+", "/");
-                    handlerMap.put(requestUrl, method);
+                    requestUrl = requestUrl.replaceAll("/+", "/");
+                    handlerMap.put(requestUrl, new Handler(clazz, method));
                 }
             }
         });
+    }
+
+    class Handler{
+        protected Class clazz;
+        protected Method method;
+        Handler(Class clazz, Method method){
+            this.clazz = clazz;
+            this.method = method;
+        }
     }
 
 
