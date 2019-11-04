@@ -1,15 +1,14 @@
-package com.baqi.controller;
+package com.baqi.service.impl;
 
-import com.baqi.annotation.BQAutowired;
-import com.baqi.annotation.BQController;
-import com.baqi.annotation.BQRequestMapping;
-import com.baqi.annotation.BQRequestParam;
+import com.baqi.annotation.BQPostConstruct;
+import com.baqi.annotation.BQService;
 import com.baqi.bean.User;
 import com.baqi.service.IBaqiService;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /***
  *      ┌─┐       ┌─┐
@@ -35,18 +34,39 @@ import java.io.IOException;
  *                神兽保佑
  *               代码无BUG!
  */
-@BQController
-@BQRequestMapping("/baqi")
-public class BaqiController {
+@BQService
+public class UserService implements IBaqiService {
 
-    @BQAutowired
-    private IBaqiService baqiService;
+    private Map<Integer, User> map;
 
-    public void find(@BQRequestParam("id")Integer id,
-                     HttpServletRequest request, HttpServletResponse response) throws IOException {
-        User res = baqiService.select(id);
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().print(res);
+    @BQPostConstruct
+    public void init() {
+        map = new HashMap<>();
+        map.put(1, new User(1, "哈哈", 29));
+        map.put(2, new User(2, "拉拉", 30));
     }
 
+    public List<User> selectList() {
+        List<User> list = new ArrayList();
+        map.entrySet().forEach(item -> {
+            list.add(item.getValue());
+        });
+        return list;
+    }
+
+    public User select(Integer id) {
+        return map.get(id);
+    }
+
+    public void insert(User user) {
+        map.put(user.getId(), user);
+    }
+
+    public void update(User user) {
+        map.put(user.getId(), user);
+    }
+
+    public void delete(Integer id) {
+        map.remove(id);
+    }
 }

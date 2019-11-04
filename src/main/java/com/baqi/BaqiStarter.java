@@ -1,5 +1,6 @@
 package com.baqi;
 
+import com.baqi.annotation.BQAutowired;
 import com.baqi.annotation.BQComponentScan;
 import com.baqi.annotation.BQController;
 import com.baqi.annotation.BQService;
@@ -63,7 +64,7 @@ public class BaqiStarter {
     }
 
     private String getScanPackage() {
-        String path = null;
+        String path;
         BQComponentScan annotation = this.getClass().getAnnotation(BQComponentScan.class);
         if (annotation != null) {
             path = annotation.value();
@@ -130,7 +131,9 @@ public class BaqiStarter {
         instanceMap.entrySet().forEach(entry -> {
             Field[] fileds = entry.getValue().getClass().getDeclaredFields();
             for (Field field : fileds) {
+                if (field.isAnnotationPresent(BQAutowired.class)) {
 
+                }
             }
         });
     }

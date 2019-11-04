@@ -28,7 +28,7 @@ import java.util.List;
  *                神兽保佑
  *               代码无BUG!
  */
-public interface IBaqiService {
+public interface IUserService {
 
     List<User> selectList();
 
