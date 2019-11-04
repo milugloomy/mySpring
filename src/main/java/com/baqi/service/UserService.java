@@ -1,9 +1,8 @@
-package com.baqi.service.impl;
+package com.baqi.service;
 
 import com.baqi.annotation.BQPostConstruct;
 import com.baqi.annotation.BQService;
 import com.baqi.bean.User;
-import com.baqi.service.IBaqiService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +34,7 @@ import java.util.Map;
  *               代码无BUG!
  */
 @BQService
-public class UserService implements IBaqiService {
+public class UserService {
 
     private Map<Integer, User> map;
 

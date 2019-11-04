@@ -5,10 +5,9 @@ import com.baqi.annotation.BQController;
 import com.baqi.annotation.BQRequestMapping;
 import com.baqi.annotation.BQRequestParam;
 import com.baqi.bean.User;
-import com.baqi.service.IUserService;
+import com.baqi.service.UserService;
 import com.baqi.util.ResEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /***
@@ -40,7 +39,7 @@ import java.util.List;
 public class UserController {
 
     @BQAutowired
-    private IUserService userService;
+    private UserService userService;
 
     @BQRequestMapping("/selectList")
     public ResEntity selectList(){
