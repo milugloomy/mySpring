@@ -8,6 +8,7 @@ import com.baqi.bean.User;
 import com.baqi.service.UserService;
 import com.baqi.util.ResEntity;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /***
@@ -48,7 +49,7 @@ public class UserController {
     }
 
     @BQRequestMapping("/select")
-    public ResEntity select(@BQRequestParam("id")Integer id){
+    public ResEntity select(@BQRequestParam("id")Integer id, HttpServletRequest request){
         User user = userService.select(id);
         return new ResEntity(user);
     }

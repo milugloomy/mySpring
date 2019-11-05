@@ -1,14 +1,20 @@
 package com.baqi;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baqi.annotation.*;
+import com.baqi.common.ParamResolver;
+import com.baqi.common.ParamWrapper;
+import com.baqi.common.RequestHandler;
+import com.baqi.util.ResEntity;
+import com.baqi.util.Util;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,9 +27,13 @@ import java.util.Map.Entry;
 
 public class DispatchServlet extends HttpServlet {
 
+    private ParamResolver paramResolver = new ParamResolver();
+    // 存储已扫描到的class
     private List<String> classNameList = new ArrayList<>();
+    // 存储实例
     private Map<String, Object> instanceMap = new HashMap<>();
-    private Map<String, Handler> handlerMap = new HashMap<>();
+    // 存储映射
+    private Map<String, RequestHandler> handlerMap = new HashMap<>();
 
     @Override
     public void init() throws ServletException {
@@ -37,6 +47,8 @@ public class DispatchServlet extends HttpServlet {
         autowired();
         //url和method映射关系
         handlerMapping();
+        //初始化
+        postConstruct();
         //初始化完成
         System.out.println("Spring 初始化完成");
     }
@@ -48,33 +60,53 @@ public class DispatchServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setCharacterEncoding("UTF-8");
         String url = req.getRequestURI();
         String contextPath = req.getContextPath();
-        url = url.replace(contextPath, "").replaceAll("/+", "");
+        url = url.replace(contextPath, "").replaceAll("/+", "/");
         Map<String, String[]> parameterMap = req.getParameterMap();
 
-        for(Entry<String, Handler> entry: handlerMap.entrySet()) {
-            if(entry.getKey().equals(url)) {
-                Handler handler = entry.getValue();
-                Method method = handler.method;
-
-
-
-
-                try {
-                    method.invoke(handler.clazz, params);
-                } catch (Exception e) {
-                    e.printStackTrace();
+        RequestHandler handler = handlerMap.get(url);
+        if(handler != null) {
+            Method method = handler.getMethod();
+            // 封装参数
+            Object[] params = new Object[method.getParameterCount()];
+            List<ParamWrapper> paramWrapperList = handler.getParamWrapperList();
+            for (int i = 0; i < paramWrapperList.size(); i++) {
+                ParamWrapper paramWrapper = paramWrapperList.get(i);
+                if (paramWrapper.getType() == HttpServletRequest.class) {
+                    params[i] = req;
+                } else if (paramWrapper.getType() == HttpServletResponse.class) {
+                    params[i] = resp;
+                } else if (paramWrapper.getType() == HttpSession.class) {
+                    params[i] = req.getSession();
+                } else {
+                    params[i] = paramResolver.packParam(paramWrapper, parameterMap);
                 }
             }
+            // 执行方法
+            try {
+                final Object ret = method.invoke(handler.getClazz(), params);
+                resp.getWriter().print(JSONObject.toJSONString(ret));
+            } catch (Exception e) {
+                e.printStackTrace();
+                ResEntity resEntity = new ResEntity();
+                resEntity.setCode("500");
+                resEntity.setErrMsg(e.getMessage());
+                resp.getWriter().print(JSONObject.toJSONString(resEntity));
+            }
+        }
+        // 返回404
+        else {
+
         }
     }
 
 
     private String getScanPackage() {
         // 获取带main方法的启动类
-        for (Entry<Thread, StackTraceElement[]> stack: Thread.getAllStackTraces().entrySet()){
-            if("main".equals(stack.getKey().getName())) {
+        for (Entry<Thread, StackTraceElement[]> stack : Thread.getAllStackTraces().entrySet()) {
+            if ("main".equals(stack.getKey().getName())) {
                 StackTraceElement[] stackTraceElements = stack.getValue();
                 StackTraceElement stackTraceElement = stackTraceElements[stackTraceElements.length - 1];
                 String className = stackTraceElement.getClassName();
@@ -82,7 +114,7 @@ public class DispatchServlet extends HttpServlet {
                     Class<?> clazz = Class.forName(className);
                     BQComponentScan bqComponentScan = clazz.getAnnotation(BQComponentScan.class);
                     String value;
-                    if(bqComponentScan == null){
+                    if (bqComponentScan == null) {
                         value = clazz.getPackage().getName();
                         return value;
                     } else {
@@ -182,28 +214,30 @@ public class DispatchServlet extends HttpServlet {
                     BQRequestMapping requestMapping = method.getAnnotation(BQRequestMapping.class);
                     String requestUrl = "/" + url + requestMapping.value();
                     requestUrl = requestUrl.replaceAll("/+", "/");
-                    handlerMap.put(requestUrl, new Handler(clazz, method));
+
+                    List<ParamWrapper> paramWrapperList = paramResolver.resolve(method);
+                    handlerMap.put(requestUrl, new RequestHandler(entry.getValue(), method, paramWrapperList));
                 }
             }
         });
     }
 
-    class Handler{
-        protected Class clazz;
-        protected Method method;
-        Handler(Class clazz, Method method){
-            this.clazz = clazz;
-            this.method = method;
-        }
+    private void postConstruct() {
+        instanceMap.entrySet().forEach(entry -> {
+            Object instance = entry.getValue();
+            Class<?> clazz = instance.getClass();
+            Method[] methods = clazz.getDeclaredMethods();
+            for (Method method : methods) {
+                if(method.isAnnotationPresent(BQPostConstruct.class)) {
+                    try {
+                        method.invoke(instance, new Object[]{});
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
-
-
-    static class Util {
-        public static String lowerFirst(String str) {
-            char[] cs = str.toCharArray();
-            cs[0] += 32;
-            return String.valueOf(cs);
-        }
-    }
-
 }
