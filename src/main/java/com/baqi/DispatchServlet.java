@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 public class DispatchServlet extends HttpServlet {
 
+    // 方法参数列表的包装
     private ParamResolver paramResolver = new ParamResolver();
     // 存储已扫描到的class
     private List<String> classNameList = new ArrayList<>();
@@ -98,7 +99,11 @@ public class DispatchServlet extends HttpServlet {
         }
         // 返回404
         else {
-
+            resp.setStatus(404);
+            ResEntity resEntity = new ResEntity();
+            resEntity.setCode("404");
+            resEntity.setErrMsg("url未找到");
+            resp.getWriter().print(JSONObject.toJSONString(resEntity));
         }
     }
 
