@@ -89,7 +89,7 @@ public class ParamResolver {
                                 methodParams[index] = name;
                             }
                             // 非静态方法，第一个参数是this，要过滤掉
-                            else if (index > 0) {
+                            else if (index > 0 && index < methodParams.length) {
                                 methodParams[index - 1] = name;
                             }
                             super.visitLocalVariable(name, desc, signature, start, end, index);

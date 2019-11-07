@@ -49,7 +49,7 @@ public class UserController {
     }
 
     @BQRequestMapping("/select")
-    public ResEntity select(@BQRequestParam("id")Integer id, HttpServletRequest request){
+    public ResEntity select(Integer id, HttpServletRequest request){
         User user = userService.select(id);
         return new ResEntity(user);
     }
