@@ -7,10 +7,6 @@ import java.io.File;
 
 public class BaqiApplication {
     public static void run(Class clazz, Object[] args) {
-        //确定classes 目录绝对路径
-        String calssesPath = System.getProperty("user.dir") +
-                File.separator + "target" + File.separator + "classes";
-        System.out.println(calssesPath);
         //创建Tomcat实例
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname("localhost");

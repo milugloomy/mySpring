@@ -3,12 +3,12 @@ package com.baqi.common;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class RequestHandler {
+public class MethodWrapper {
     private Object clazz;
     private Method method;
     private List<ParamWrapper> paramWrapperList;
 
-    public RequestHandler(Object clazz, Method method, List<ParamWrapper> paramWrapperList) {
+    public MethodWrapper(Object clazz, Method method, List<ParamWrapper> paramWrapperList) {
         this.clazz = clazz;
         this.method = method;
         this.paramWrapperList = paramWrapperList;

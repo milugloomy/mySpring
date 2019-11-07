@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baqi.annotation.*;
 import com.baqi.common.ParamResolver;
 import com.baqi.common.ParamWrapper;
-import com.baqi.common.RequestHandler;
+import com.baqi.common.MethodWrapper;
 import com.baqi.util.ResEntity;
 import com.baqi.util.Util;
 
@@ -34,7 +34,7 @@ public class DispatchServlet extends HttpServlet {
     // 存储实例
     private Map<String, Object> instanceMap = new HashMap<>();
     // 存储映射
-    private Map<String, RequestHandler> handlerMap = new HashMap<>();
+    private Map<String, MethodWrapper> handlerMap = new HashMap<>();
 
     @Override
     public void init() throws ServletException {
@@ -67,12 +67,12 @@ public class DispatchServlet extends HttpServlet {
         url = url.replace(contextPath, "").replaceAll("/+", "/");
         Map<String, String[]> parameterMap = req.getParameterMap();
 
-        RequestHandler handler = handlerMap.get(url);
-        if (handler != null) {
-            Method method = handler.getMethod();
+        MethodWrapper methodWrapper = handlerMap.get(url);
+        if (methodWrapper != null) {
+            Method method = methodWrapper.getMethod();
             // 封装参数
             Object[] params = new Object[method.getParameterCount()];
-            List<ParamWrapper> paramWrapperList = handler.getParamWrapperList();
+            List<ParamWrapper> paramWrapperList = methodWrapper.getParamWrapperList();
             for (int i = 0; i < paramWrapperList.size(); i++) {
                 ParamWrapper paramWrapper = paramWrapperList.get(i);
                 if (paramWrapper.getType() == HttpServletRequest.class) {
@@ -87,7 +87,7 @@ public class DispatchServlet extends HttpServlet {
             }
             // 执行方法
             try {
-                final Object ret = method.invoke(handler.getClazz(), params);
+                final Object ret = method.invoke(methodWrapper.getClazz(), params);
                 resp.getWriter().print(JSONObject.toJSONString(ret));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -227,7 +227,7 @@ public class DispatchServlet extends HttpServlet {
                     requestUrl = requestUrl.replaceAll("/+", "/");
 
                     List<ParamWrapper> paramWrapperList = paramResolver.resolve(method);
-                    handlerMap.put(requestUrl, new RequestHandler(entry.getValue(), method, paramWrapperList));
+                    handlerMap.put(requestUrl, new MethodWrapper(entry.getValue(), method, paramWrapperList));
                 }
             }
         });
