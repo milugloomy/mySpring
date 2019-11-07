@@ -132,7 +132,7 @@ public class DispatchServlet extends HttpServlet {
 
             }
         }
-        throw new RuntimeException("初始化失败");
+        throw new RuntimeException("获取包扫描路径失败");
     }
 
     private void scanClass(String path) {
