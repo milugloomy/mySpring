@@ -23,9 +23,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class DispatchServlet extends HttpServlet {
+    private Class<?> startClass;
 
     // 方法参数列表的包装
     private ParamResolver paramResolver = new ParamResolver();
@@ -68,7 +68,7 @@ public class DispatchServlet extends HttpServlet {
         Map<String, String[]> parameterMap = req.getParameterMap();
 
         RequestHandler handler = handlerMap.get(url);
-        if(handler != null) {
+        if (handler != null) {
             Method method = handler.getMethod();
             // 封装参数
             Object[] params = new Object[method.getParameterCount()];
@@ -110,7 +110,7 @@ public class DispatchServlet extends HttpServlet {
 
     private String getScanPackage() {
         // 获取带main方法的启动类
-        for (Entry<Thread, StackTraceElement[]> stack : Thread.getAllStackTraces().entrySet()) {
+        /*for (Entry<Thread, StackTraceElement[]> stack : Thread.getAllStackTraces().entrySet()) {
             if ("main".equals(stack.getKey().getName())) {
                 StackTraceElement[] stackTraceElements = stack.getValue();
                 StackTraceElement stackTraceElement = stackTraceElements[stackTraceElements.length - 1];
@@ -132,7 +132,13 @@ public class DispatchServlet extends HttpServlet {
 
             }
         }
-        throw new RuntimeException("初始化失败");
+        throw new RuntimeException("初始化失败");*/
+        BQComponentScan annotation = startClass.getAnnotation(BQComponentScan.class);
+        if (annotation != null) {
+            return annotation.value();
+        } else {
+            return startClass.getPackage().getName();
+        }
     }
 
     private void scanClass(String path) {
@@ -233,7 +239,7 @@ public class DispatchServlet extends HttpServlet {
             Class<?> clazz = instance.getClass();
             Method[] methods = clazz.getDeclaredMethods();
             for (Method method : methods) {
-                if(method.isAnnotationPresent(BQPostConstruct.class)) {
+                if (method.isAnnotationPresent(BQPostConstruct.class)) {
                     try {
                         method.invoke(instance, new Object[]{});
                     } catch (IllegalAccessException e) {
@@ -244,5 +250,9 @@ public class DispatchServlet extends HttpServlet {
                 }
             }
         });
+    }
+
+    public void setStartClass(Class<?> startClass) {
+        this.startClass = startClass;
     }
 }
