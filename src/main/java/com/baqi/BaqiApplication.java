@@ -12,12 +12,14 @@ public class BaqiApplication {
     public static void run(Class clazz, Object[] args) {
         Properties properties = getProperties();
         String port = properties.getProperty("server.port");
-        if(port == null) {
+        if (port == null) {
             port = "8080";
         }
         String contextPath = properties.getProperty("server.contextPath");
-        if(contextPath == null) {
+        if (contextPath == null) {
             contextPath = "";
+        } else if (!contextPath.startsWith("/")) {
+            contextPath = "/" + contextPath;
         }
         //创建Tomcat实例
         Tomcat tomcat = new Tomcat();
@@ -47,7 +49,7 @@ public class BaqiApplication {
         }
     }
 
-    public static Properties getProperties(){
+    public static Properties getProperties() {
         InputStream is = BaqiApplication.class.getResourceAsStream("/application.properties");
         Properties properties = new Properties();
         try {
