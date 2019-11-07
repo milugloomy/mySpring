@@ -4,19 +4,31 @@ import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class BaqiApplication {
     public static void run(Class clazz, Object[] args) {
+        Properties properties = getProperties();
+        String port = properties.getProperty("server.port");
+        if(port == null) {
+            port = "8080";
+        }
+        String contextPath = properties.getProperty("server.contextPath");
+        if(contextPath == null) {
+            contextPath = "";
+        }
         //创建Tomcat实例
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname("localhost");
-        tomcat.setPort(9527);
+        tomcat.setPort(Integer.valueOf(port));
         //设置 Context
         //server.xml - <Context docBase="" path="/" /></Host>
         String webapp = System.getProperty("user.dir") + File.separator
                 + "src" + File.separator + "main" + File.separator + "resources";
         //设置项目名
-        String contextPath = "/mySpring";
+//        String contextPath = "/mySpring";
         try {
             tomcat.addWebapp(contextPath, webapp);
             // 添加Servlet到tomcat 容器
@@ -33,5 +45,16 @@ public class BaqiApplication {
             e.printStackTrace();
             throw new RuntimeException("tomcat启动失败");
         }
+    }
+
+    public static Properties getProperties(){
+        InputStream is = BaqiApplication.class.getResourceAsStream("/application.properties");
+        Properties properties = new Properties();
+        try {
+            properties.load(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return properties;
     }
 }
